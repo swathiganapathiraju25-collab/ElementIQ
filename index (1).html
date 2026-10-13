@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<!-- viewport-fit=cover makes the page fill iPhones with a notch -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ElementIQ - a chemistry learning assistant for students">
+<title>ElementIQ - Chemistry Learning Assistant</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+<style>
+/* ===== 1. COLOURS (change these to restyle the whole site) ===== */
+:root{
+  --bg:#eaf3f2; --card:#ffffff; --ink:#0c2a30; --muted:#4d6a70; --line:#cfe0de;
+  --brand:#0b8f94; --brand-ink:#ffffff;
+  --acid:#d9480f; --acid-bg:#ffe8dc;
+  --base:#1c64d8; --base-bg:#e0ebff;
+  --neutral:#1b8a4b; --neutral-bg:#ddf5e6;
+  --shadow:0 6px 20px rgba(12,42,48,.08);
+}
+:root[data-theme="dark"]{
+  --bg:#081215; --card:#112126; --ink:#e6f4f3; --muted:#92b0b3; --line:#223c42;
+  --brand:#2fc7cc; --brand-ink:#04181b;
+  --acid:#ff9a66; --acid-bg:#3b2013;
+  --base:#7fb0ff; --base-bg:#14264a;
+  --neutral:#5fdc92; --neutral-bg:#10331f;
+  --shadow:0 6px 20px rgba(0,0,0,.4);
+}
+/* ===== 2. BASE STYLES (mobile-first: written for phones, widened later) ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;font-size:1rem;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  transition:background .3s,color .3s;
+}
+.wrap{width:100%;max-width:960px;margin:0 auto;padding:0 1rem}
+h1,h2,h3{line-height:1.2}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+/* ===== 3. HEADER ===== */
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.6rem 0}
+.logo{display:flex;align-items:center;gap:.6rem;font-weight:800;font-size:1.3rem;letter-spacing:-.02em}
+.logo i{font-style:normal;display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:.5rem;
+  background:var(--brand);color:var(--brand-ink);font-size:.95rem;border:2px solid var(--ink)}
+.logo span b{color:var(--brand)}
+.icon-btn{min-height:48px;min-width:48px;padding:0 1rem;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-weight:600}
+/* ===== 4. HERO + SEARCH ===== */
+.hero{padding:1.75rem 0 1rem}
+.hero h1{font-size:clamp(1.9rem,7vw,3.2rem);letter-spacing:-.03em;max-width:16ch}
+.hero p{color:var(--muted);margin:.6rem 0 1.25rem;max-width:46ch}
+.search{display:flex;flex-direction:column;gap:.6rem}
+.search input{
+  width:100%;min-height:54px;padding:0 1rem;border-radius:.9rem;border:2px solid var(--line);
+  background:var(--card);color:var(--ink);font:inherit;font-size:16px; /* 16px stops iPhone auto-zoom */
+}
+.search input:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 4px rgba(11,143,148,.2)}
+.btn{min-height:54px;padding:0 1.5rem;border-radius:.9rem;border:0;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:1rem;transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.9rem}
+.chip{min-height:44px;padding:0 1rem;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-size:.95rem}
+.chip:active{background:var(--brand);color:var(--brand-ink)}
+.label{font-size:.9rem;color:var(--muted);margin-top:1.1rem;font-weight:600}
+/* ===== 5. RESULT CARDS ===== */
+section{margin:1.5rem 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:1.1rem;padding:1.15rem;box-shadow:var(--shadow)}
+.pop{animation:pop .45s ease both}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem}
+.top h2{font-size:1.6rem;overflow-wrap:anywhere}
+.formula{font-size:2rem;font-weight:800;color:var(--brand);margin:.25rem 0}
+.badge{display:inline-block;padding:.35rem .9rem;border-radius:999px;font-weight:700;font-size:.95rem}
+.acidic{background:var(--acid-bg);color:var(--acid)}
+.basic{background:var(--base-bg);color:var(--base)}
+.neutral{background:var(--neutral-bg);color:var(--neutral)}
+.grid{display:grid;grid-template-columns:1fr;gap:.9rem;margin-top:1rem}
+.info{border-left:4px solid var(--brand);padding:.2rem 0 .2rem .8rem}
+.info small{display:block;color:var(--muted);font-weight:600}
+/* pH scale bar: marker shows where the substance sits */
+.ph{position:relative;height:12px;border-radius:99px;margin:1rem 0 .3rem;background:linear-gradient(90deg,#e8590c,#f5b82e,#3fb36b,#2d8fd6,#4338ca)}
+.ph b{position:absolute;top:-5px;width:22px;height:22px;border-radius:50%;background:var(--card);border:4px solid var(--ink);transform:translateX(-50%);transition:left .6s}
+.phl{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+/* element tiles look like periodic-table squares */
+.atoms{display:grid;grid-template-columns:1fr;gap:.9rem;margin-top:.9rem}
+.atom{display:flex;gap:1rem;align-items:center}
+.tile{flex:0 0 auto;width:5rem;height:5rem;border:2px solid var(--ink);border-radius:.6rem;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.tile em{position:absolute;top:.2rem;left:.35rem;font-size:.75rem;font-style:normal;color:var(--muted)}
+.tile strong{font-size:2rem;line-height:1;color:var(--brand)}
+.tile span{font-size:.65rem;color:var(--muted)}
+.atom h3{font-size:1.1rem}
+.atom ul{list-style:none;font-size:.95rem;color:var(--muted)}
+.atom li b{color:var(--ink)}
+.empty{text-align:center;color:var(--muted)}
+/* ===== 6. LEARNING SECTION ===== */
+h2.title{font-size:1.5rem;margin-bottom:.8rem}
+.learn{display:grid;grid-template-columns:1fr;gap:.9rem}
+.learn .card h3{margin-bottom:.4rem}
+.learn p,.learn li{color:var(--muted)}
+.learn ul{padding-left:1.1rem;margin-top:.4rem}
+.learn .a{border-top:5px solid var(--acid)} .learn .b{border-top:5px solid var(--base)} .learn .n{border-top:5px solid var(--neutral)} .learn .d{border-top:5px solid var(--brand)}
+footer{padding:1.5rem 0 2rem;text-align:center;color:var(--muted);font-size:.9rem}
+/* ===== 7. BIGGER SCREENS (tablets and laptops) ===== */
+@media (min-width:600px){
+  .search{flex-direction:row}.btn{min-width:150px}
+  .grid,.atoms,.learn{grid-template-columns:1fr 1fr}
+  .wrap{padding:0 1.5rem}
+}
+@media (min-width:900px){.atoms{grid-template-columns:1fr 1fr 1fr}.card{padding:1.5rem}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.element{background:rgba(11,143,148,.15);color:var(--brand)}
+.salt{background:rgba(124,58,237,.14);color:#6d28d9}
+:root[data-theme="dark"] .salt{color:#c4a3ff}
+.sub{margin:1.2rem 0 .6rem}
+#favBtn{margin:.5rem 0 0;min-height:44px}
+.opts{display:grid;grid-template-columns:1fr;gap:.6rem;margin-top:.6rem}
+.opt{min-height:56px;text-align:left;padding:.5rem 1rem;border-radius:.8rem;border:1.5px solid var(--line);background:var(--bg);display:flex;flex-direction:column}
+.opt span{color:var(--muted);font-size:.9rem}
+.opt:active{border-color:var(--brand)}
+@media (min-width:600px){.opts{grid-template-columns:1fr 1fr}}
+.atom small{color:var(--muted)}
+.sec{border:1px solid var(--line);border-radius:.8rem;margin-top:.6rem;overflow:hidden}
+.sec summary{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.4rem 1rem;font-weight:700;cursor:pointer;background:var(--bg)}
+.sec summary small{color:var(--muted);font-weight:500}
+.row{display:flex;flex-direction:column;gap:.1rem;padding:.6rem 1rem;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.row .k{font-size:.85rem;color:var(--muted);font-weight:600}
+.row .unk{color:var(--muted);font-style:italic}
+.tag{font-style:normal;font-size:.7rem;font-weight:700;padding:.1rem .45rem;border-radius:99px;margin-left:.3rem;white-space:nowrap}
+.tm{background:var(--neutral-bg);color:var(--neutral)}.tt{background:var(--base-bg);color:var(--base)}
+.te{background:var(--acid-bg);color:var(--acid)}.tc,.tn{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+@media (min-width:600px){.row{flex-direction:row;gap:1rem}.row .k{flex:0 0 14rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="logo"><i>Iq</i><span>Element<b>IQ</b></span></div>
+    <!-- Dark mode toggle -->
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark mode">🌙 Dark</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Look up any substance. Understand its chemistry.</h1>
+    <p>Search over 120 elements and compounds to see the formula, type, physical state, uses, a Class 7–10 explanation and the protons, electrons and neutrons of every atom inside.</p>
+
+    <form class="search" id="form" autocomplete="off">
+      <input id="q" type="search" placeholder="Search an element or compound, e.g. Iron" aria-label="Substance name" enterkeyhint="search" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="btn" type="submit">Search</button>
+    </form>
+
+    <div class="chips" id="live"></div>
+    <p class="label">Try one of these:</p>
+    <div class="chips" id="examples"></div>
+
+    <p class="label" id="recentLabel" hidden>Recent searches:</p>
+    <div class="chips" id="recent"></div>
+
+    <p class="label" id="favLabel" hidden>♥ Favourites:</p>
+    <div class="chips" id="favs"></div>
+  </div>
+
+  <!-- Results appear here -->
+  <section id="result" aria-live="polite"></section>
+
+  <!-- Learning section -->
+  <section>
+    <h2 class="title">Learn the basics</h2>
+    <div class="learn">
+      <div class="card a"><h3>What are acids?</h3>
+        <p>Acids release hydrogen ions (H⁺) in water. They taste sour, turn blue litmus paper red and have a pH below 7.</p>
+        <ul><li>Lemon juice, vinegar, curd</li><li>Fizzy drinks, vitamin C tablets</li></ul></div>
+      <div class="card b"><h3>What are bases?</h3>
+        <p>Bases release hydroxide ions (OH⁻) in water or accept H⁺. They feel slippery, taste bitter, turn red litmus blue and have a pH above 7.</p>
+        <ul><li>Soap, baking soda, toothpaste</li><li>Milk of magnesia, household ammonia</li></ul></div>
+      <div class="card n"><h3>What are neutral substances?</h3>
+        <p>Neutral substances are neither acidic nor basic. They have a pH of about 7 and do not change litmus paper.</p>
+        <ul><li>Pure water, table salt</li><li>Sugar, cooking alcohol</li></ul></div>
+      <div class="card d"><h3>Examples from daily life</h3>
+        <p>Your stomach uses hydrochloric acid to digest food. Baking soda settles acidity. Salt flavours food. Soap works because it is basic.</p>
+        <ul><li>Tip: pH 7 is neutral, lower is acidic, higher is basic</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">ElementIQ · Works offline · Made for curious students</footer>
+
+<script>
+/* ===== A. ELEMENT DATABASE =====
+   symbol : [name, atomic number, atomic mass, mass number of the most common isotope, state, category, uses]
+   Neutrons = mass number - atomic number. Protons = electrons = atomic number (neutral atom). */
+const ELEMENTS = {
+  H:["Hydrogen",1,1.008,1,"gas","non-metal","Rocket fuel, making ammonia and a clean fuel."],
+  He:["Helium",2,4.003,4,"gas","noble gas","Balloons and cooling MRI scanners."],
+  Li:["Lithium",3,6.94,7,"solid","alkali metal","Rechargeable batteries in phones and cars."],
+  Be:["Beryllium",4,9.012,9,"solid","alkaline earth metal","Light, strong alloys for aircraft and satellites."],
+  B:["Boron",5,10.81,11,"solid","metalloid","Heat-proof glass and detergents."],
+  C:["Carbon",6,12.011,12,"solid","non-metal","Fuel, pencils (graphite), diamonds and steel making."],
+  N:["Nitrogen",7,14.007,14,"gas","non-metal","Fertilisers and keeping food fresh."],
+  O:["Oxygen",8,15.999,16,"gas","non-metal","Breathing, burning and rusting."],
+  F:["Fluorine",9,18.998,19,"gas","halogen","Toothpaste (fluoride) and non-stick coatings."],
+  Ne:["Neon",10,20.18,20,"gas","noble gas","Bright advertising signs."],
+  Na:["Sodium",11,22.99,23,"solid","alkali metal","Making salt, soap and street lamps."],
+  Mg:["Magnesium",12,24.305,24,"solid","alkaline earth metal","Light alloys, fireworks and camera flash."],
+  Al:["Aluminium",13,26.982,27,"solid","metal","Foil, cans, aircraft and cooking pots."],
+  Si:["Silicon",14,28.085,28,"solid","metalloid","Computer chips, solar panels and glass."],
+  P:["Phosphorus",15,30.974,31,"solid","non-metal","Matches, fertilisers and bones."],
+  S:["Sulfur",16,32.06,32,"solid","non-metal","Making sulfuric acid, gunpowder and hardening rubber."],
+  Cl:["Chlorine",17,35.45,35,"gas","halogen","Disinfecting water and making PVC plastic."],
+  Ar:["Argon",18,39.948,40,"gas","noble gas","Filling light bulbs and welding."],
+  K:["Potassium",19,39.098,39,"solid","alkali metal","Fertilisers; needed by nerves and muscles."],
+  Ca:["Calcium",20,40.078,40,"solid","alkaline earth metal","Strong bones and teeth, cement and chalk."],
+  Ti:["Titanium",22,47.867,48,"solid","transition metal","Aircraft, joint replacements and white paint."],
+  Cr:["Chromium",24,51.996,52,"solid","transition metal","Stainless steel and shiny chrome plating."],
+  Mn:["Manganese",25,54.938,55,"solid","transition metal","Making steel and dry batteries."],
+  Fe:["Iron",26,55.845,56,"solid","transition metal","Steel, buildings, vehicles and haemoglobin in blood."],
+  Co:["Cobalt",27,58.933,59,"solid","transition metal","Magnets, batteries and blue glass."],
+  Ni:["Nickel",28,58.693,58,"solid","transition metal","Coins, stainless steel and batteries."],
+  Cu:["Copper",29,63.546,63,"solid","transition metal","Electric wires, pipes and utensils."],
+  Zn:["Zinc",30,65.38,64,"solid","transition metal","Galvanising iron, making brass and batteries."],
+  Br:["Bromine",35,79.904,79,"liquid","halogen","Flame retardants and photography chemicals."],
+  Ag:["Silver",47,107.868,107,"solid","transition metal","Jewellery, coins, mirrors and photography."],
+  Sn:["Tin",50,118.71,120,"solid","metal","Tin cans, solder and bronze."],
+  I:["Iodine",53,126.904,127,"solid","halogen","Antiseptic and iodised salt for the thyroid."],
+  Ba:["Barium",56,137.327,138,"solid","alkaline earth metal","Green fireworks and X-ray barium meals."],
+  Au:["Gold",79,196.967,197,"solid","transition metal","Jewellery, electronics and coins."],
+  Hg:["Mercury",80,200.59,202,"liquid","transition metal","Older thermometers and lamps. Poisonous."],
+  Pb:["Lead",82,207.2,208,"solid","metal","Batteries and radiation shields. Poisonous."]
+};
+// How each kind of element behaves (shown in "How it behaves")
+const HOW = {
+ "alkali metal":"Very soft and highly reactive. It reacts fiercely with water to give hydrogen gas and a basic solution, so it is stored under oil.",
+ "alkaline earth metal":"A reactive metal that burns in air and reacts with acids to release hydrogen gas. Its oxide makes basic solutions.",
+ "transition metal":"A hard, shiny metal that conducts heat and electricity. It reacts slowly with oxygen and often forms coloured compounds.",
+ "metal":"A shiny metal that conducts electricity and reacts with oxygen to form a metal oxide.",
+ "non-metal":"Usually dull and a poor conductor of electricity. It forms acidic oxides when it burns in oxygen.",
+ "halogen":"A very reactive non-metal. It forms salts with metals and strong acids when joined with hydrogen.",
+ "noble gas":"A very unreactive gas because its outer shell is full, so it hardly ever forms compounds.",
+ "metalloid":"Has some properties of metals and some of non-metals, and is often a semiconductor."
+};
+const METALS = ["alkali metal","alkaline earth metal","transition metal","metal"];
+function elementWhy(c){
+  const base = "A pure element is made of only one kind of atom, so it is not an acid or a base by itself. ";
+  if(METALS.includes(c)) return base+"However, metals form basic oxides, which make bases when dissolved in water.";
+  if(c==="non-metal"||c==="halogen") return base+"However, non-metals form acidic oxides, which make acids when dissolved in water.";
+  if(c==="noble gas") return base+"Noble gases do not react with water at all, so they are neutral.";
+  return base+"Its oxides can behave as either acids or bases, so we treat it as neutral.";
+}
+
+/* ===== B. COMPOUND DATABASE =====
+   Format: [common name, other names to search (separated by |), chemical name, formula, behaviour in water, uses, why]
+   Behaviour in water must be exactly "Acidic", "Basic" or "Neutral".
+   Hydrates are written with brackets, e.g. MgSO4(H2O)7. To add a substance, copy a line and edit it. */
+const DB = [
+ ["Water","h2o|pure water","Dihydrogen monoxide","H2O","Neutral","Drinking, cooking, cleaning, farming and as a universal solvent.","Pure water splits into equal amounts of H⁺ and OH⁻ ions, so neither wins. pH is 7."],
+ ["Hydrochloric Acid","hcl|muriatic acid","Hydrogen chloride solution","HCl","Acidic","Cleaning metals, making chemicals, and it is found in your stomach to digest food.","It is a strong acid: in water it breaks up completely and releases lots of H⁺ ions."],
+ ["Sodium Chloride","nacl|salt|table salt","Sodium chloride","NaCl","Neutral","Seasoning and preserving food, and making chlorine and soda.","It forms from a strong acid and a strong base, so its water solution is neutral."],
+ ["Sodium Hydroxide","naoh|caustic soda|lye","Sodium hydroxide","NaOH","Basic","Making soap, paper and cleaners such as drain openers.","It releases many OH⁻ ions in water, which makes it a strong base."],
+ ["Sulfuric Acid","h2so4|oil of vitriol","Sulfuric acid","H2SO4","Acidic","Car batteries, fertilisers and making other chemicals.","It gives away H⁺ ions very easily, making it a strong acid."],
+ ["Nitric Acid","hno3|aqua fortis","Nitric acid","HNO3","Acidic","Making fertilisers and explosives, and cleaning metals.","It is a strong acid that releases H⁺ ions completely in water."],
+ ["Acetic Acid","vinegar|ethanoic acid|ch3cooh","Ethanoic acid","CH3COOH","Acidic","Vinegar for food, pickling and cleaning.","It is a weak acid: only a few of its molecules release H⁺ in water."],
+ ["Citric Acid","lemon acid|nimbu","2-hydroxypropane-1,2,3-tricarboxylic acid","C6H8O7","Acidic","Gives lemons and oranges their sour taste; used in drinks and sweets.","Its molecule can release H⁺ ions, which makes it a weak acid."],
+ ["Carbonic Acid","soda water|h2co3","Carbonic acid","H2CO3","Acidic","Gives soda drinks their fizz and helps control blood pH.","Carbon dioxide dissolved in water makes this weak acid that releases some H⁺."],
+ ["Phosphoric Acid","h3po4","Phosphoric acid","H3PO4","Acidic","Cola drinks, fertilisers and rust removers.","It releases H⁺ ions in water, so it is a moderately weak acid."],
+ ["Lactic Acid","milk acid","2-hydroxypropanoic acid","C3H6O3","Acidic","Found in curd and yoghurt; also built up in tired muscles.","It is a weak organic acid that releases some H⁺ ions."],
+ ["Ascorbic Acid","vitamin c","Ascorbic acid","C6H8O6","Acidic","Vitamin C for healthy skin and immunity; a food preservative.","It is a weak acid that can give away H⁺ ions."],
+ ["Ammonia","nh3|ammonia gas","Azane","NH3","Basic","Cleaners, fertilisers and making other chemicals.","Ammonia takes H⁺ from water and leaves extra OH⁻, so it is a weak base."],
+ ["Potassium Hydroxide","koh|caustic potash","Potassium hydroxide","KOH","Basic","Soft soaps, alkaline batteries and biodiesel.","It releases OH⁻ ions fully in water, so it is a strong base."],
+ ["Calcium Hydroxide","slaked lime|lime water|limewater|caoh2","Calcium hydroxide","Ca(OH)2","Basic","Whitewashing walls, treating acidic soil and making cement.","It releases OH⁻ ions in water (two per unit), so it is a base."],
+ ["Magnesium Hydroxide","milk of magnesia|mgoh2","Magnesium hydroxide","Mg(OH)2","Basic","Antacid medicine that calms an upset stomach.","It gives OH⁻ ions that cancel stomach acid."],
+ ["Sodium Bicarbonate","baking soda|sodium hydrogen carbonate|nahco3","Sodium hydrogen carbonate","NaHCO3","Basic","Baking, antacids, cleaning and fire extinguishers.","It reacts with water to give a mildly basic solution (pH about 8)."],
+ ["Sodium Carbonate","washing soda|soda ash|na2co3","Sodium carbonate","Na2CO3","Basic","Washing clothes, softening water and making glass.","Its carbonate ion takes H⁺ from water, leaving extra OH⁻."],
+ ["Calcium Carbonate","limestone|chalk|marble|caco3","Calcium carbonate","CaCO3","Basic","Chalk, cement, antacids and eggshells.","It reacts with acids and neutralises them, so it acts as a mild base."],
+ ["Calcium Oxide","quicklime|lime|cao","Calcium oxide","CaO","Basic","Making cement, steel and slaked lime.","It reacts with water to form calcium hydroxide, a base."],
+ ["Carbon Dioxide","co2|dry ice","Carbon dioxide","CO2","Acidic","Fizzy drinks, fire extinguishers and plant photosynthesis.","It dissolves in water to form carbonic acid, so it is an acidic oxide."],
+ ["Sulfur Dioxide","so2","Sulfur dioxide","SO2","Acidic","Preserving dried fruit and making sulfuric acid; causes acid rain.","It dissolves in water to form sulfurous acid, so it is an acidic oxide."],
+ ["Ammonium Chloride","nh4cl|sal ammoniac","Ammonium chloride","NH4Cl","Acidic","Dry cell batteries, fertilisers and soldering.","The ammonium ion gives H⁺ to water, so the solution is slightly acidic."],
+ ["Copper Sulfate","blue vitriol|cuso4|copper sulphate","Copper(II) sulfate","CuSO4","Acidic","Killing fungus on plants, electroplating and school experiments.","It comes from a weak base and a strong acid, so its solution is slightly acidic."],
+ ["Potassium Chloride","kcl|sylvite","Potassium chloride","KCl","Neutral","Fertiliser, salt substitute and medicine.","Strong base plus strong acid gives a neutral salt."],
+ ["Calcium Chloride","cacl2|road salt","Calcium chloride","CaCl2","Neutral","De-icing roads, drying agent and food firming.","It is a salt of a strong acid and a strong base, so it is neutral."],
+ ["Sodium Nitrate","nano3|chile saltpetre","Sodium nitrate","NaNO3","Neutral","Fertiliser, food preservation and glass making.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Silver Nitrate","agno3","Silver nitrate","AgNO3","Neutral","Photography, mirrors and testing for chloride ions in the lab.","Its solution is close to neutral, as it comes from a strong acid and a fairly weak base."],
+ ["Glucose","sugar|dextrose|c6h12o6","Glucose","C6H12O6","Neutral","The main energy source for your body and cells.","Its molecules do not release H⁺ or OH⁻ ions in water, so it is neutral."],
+ ["Sucrose","cane sugar|table sugar|sugar","Sucrose","C12H22O11","Neutral","Sweetener in food and drinks.","It dissolves as whole molecules and releases no H⁺ or OH⁻ ions."],
+ ["Ethanol","alcohol|ethyl alcohol|c2h5oh","Ethanol","C2H5OH","Neutral","Sanitisers, fuel, solvents and medicines.","It does not release ions in water, so the solution stays neutral."],
+ ["Hydrogen Peroxide","h2o2|peroxide","Hydrogen peroxide","H2O2","Neutral","Disinfecting wounds, bleaching hair and cleaning.","Pure hydrogen peroxide is very weakly acidic, so it is treated as neutral at school level."],
+ ["Methane","ch4|natural gas|cooking gas","Methane","CH4","Neutral","Cooking gas and fuel for power stations.","Methane does not react with water to make H⁺ or OH⁻, so it is neutral."],
+ ["Oxygen Gas","o2|dioxygen","Dioxygen","O2","Neutral","Breathing, burning fuel and hospital oxygen supply.","Oxygen gas barely reacts with water, so it is neutral."],
+ ["Hydrogen Gas","h2|dihydrogen","Dihydrogen","H2","Neutral","Rocket fuel, making ammonia and clean energy.","Hydrogen gas does not release H⁺ or OH⁻ in water, so it is neutral."],
+ ["Nitrogen Gas","n2|dinitrogen","Dinitrogen","N2","Neutral","Fertilisers, food packing and freezing with liquid nitrogen.","Nitrogen gas is very unreactive and does not change pH."],
+ ["Chlorine Gas","cl2|dichlorine","Dichlorine","Cl2","Acidic","Disinfecting swimming pools and drinking water.","It reacts with water to form hydrochloric and hypochlorous acids."],
+ ["Hydrogen Sulfide","h2s|rotten egg gas","Hydrogen sulfide","H2S","Acidic","Lab testing of metals; it is the smell of rotten eggs.","It dissolves in water and releases a little H⁺, so it is a weak acid."],
+ ["Hydrobromic Acid","hbr","Hydrogen bromide solution","HBr","Acidic","Making bromide salts and chemicals.","A strong acid that releases H⁺ ions completely in water."],
+ ["Boric Acid","h3bo3|eye wash","Boric acid","H3BO3","Acidic","Mild antiseptic, eye wash and insect killer.","A very weak acid that takes OH⁻ from water, leaving extra H⁺."],
+ ["Formic Acid","methanoic acid|ant acid|ch2o2","Methanoic acid","CH2O2","Acidic","Ant and bee stings contain it; used in leather making.","A weak organic acid that releases some H⁺."],
+ ["Oxalic Acid","c2h2o4","Ethanedioic acid","C2H2O4","Acidic","Removing rust and stains; found in spinach.","A fairly strong organic acid that releases H⁺ ions."],
+ ["Tartaric Acid","c4h6o6|cream of tartar","2,3-dihydroxybutanedioic acid","C4H6O6","Acidic","Baking powder and the sour taste of grapes.","It releases H⁺ ions in water, so it is a weak acid."],
+ ["Aspirin","acetylsalicylic acid|c9h8o4","Acetylsalicylic acid","C9H8O4","Acidic","Pain relief, fever reduction and thinning blood.","It is a weak acid that gives away H⁺ ions."],
+ ["Ammonium Nitrate","nh4no3","Ammonium nitrate","NH4NO3","Acidic","Fertilisers and cold packs.","The ammonium ion gives H⁺ to water, so the solution is slightly acidic."],
+ ["Aluminium Sulfate","alum|aluminum sulfate|al2so43","Aluminium sulfate","Al2(SO4)3","Acidic","Purifying water and dyeing cloth.","The aluminium ion reacts with water and releases H⁺."],
+ ["Zinc Sulfate","znso4","Zinc sulfate","ZnSO4","Acidic","Zinc supplements, fertiliser and preserving wood.","Zinc ions react with water and give a slightly acidic solution."],
+ ["Silicon Dioxide","sand|silica|quartz|sio2","Silicon dioxide","SiO2","Acidic","Glass, sand, concrete and computer chips.","It is an acidic oxide: it reacts with bases and not with acids."],
+ ["Sodium Sulfate","na2so4|glauber's salt","Sodium sulfate","Na2SO4","Neutral","Detergents, glass and paper making.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Potassium Nitrate","kno3|saltpetre","Potassium nitrate","KNO3","Neutral","Fertiliser, fireworks and food preservation.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Calcium Sulfate","gypsum|plaster of paris|caso4","Calcium sulfate","CaSO4","Neutral","Plaster casts, chalk and wall boards.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Potassium Permanganate","kmno4","Potassium manganate(VII)","KMnO4","Neutral","Disinfecting water and a purple lab chemical.","Its solution is close to neutral."],
+ ["Glycerol","glycerin|glycerine|c3h8o3","Propane-1,2,3-triol","C3H8O3","Neutral","Soaps, skin creams and medicines.","It does not release H⁺ or OH⁻ ions, so it is neutral."],
+ ["Acetone","nail polish remover|propanone|c3h6o","Propanone","C3H6O","Neutral","Nail polish remover and a paint solvent.","It does not form ions in water, so it is neutral."],
+ ["Urea","carbamide|ch4n2o","Carbamide","CH4N2O","Neutral","A major fertiliser and found in urine.","It is a very weak base, which is close to neutral in water."],
+ ["Propane","c3h8|lpg","Propane","C3H8","Neutral","LPG cooking gas and heating.","It does not react with water to make ions, so it is neutral."],
+ ["Magnesium Oxide","mgo|magnesia","Magnesium oxide","MgO","Basic","Antacids, furnace linings and gym chalk.","It reacts with water to form magnesium hydroxide, a base."],
+ ["Zinc Oxide","zno","Zinc oxide","ZnO","Basic","Sunscreen, paints and rubber.","A metal oxide that reacts with acids, so it is basic."],
+ ["Iron(III) Oxide","rust|fe2o3|iron oxide","Iron(III) oxide","Fe2O3","Basic","Rust, red paint pigment and making iron.","A metal oxide that reacts with acids, so it is basic."],
+ ["Aluminium Hydroxide","aluminum hydroxide|aloh3","Aluminium hydroxide","Al(OH)3","Basic","Antacid medicine and water treatment.","It gives OH⁻ ions and neutralises stomach acid, so it acts as a base."],
+ ["Sodium Hypochlorite","bleach|naocl","Sodium hypochlorite","NaOCl","Basic","Household bleach and water disinfection.","Its ion takes H⁺ from water, leaving extra OH⁻, so it is basic."],
+ ["Soap","sodium stearate|c18h35nao2","Sodium stearate","C18H35NaO2","Basic","Washing hands and clothes.","Soap is made from a weak acid and a strong base, so it is basic."],
+ ["Epsom Salt","magnesium sulfate|magnesium sulphate|mgso4|bath salt","Magnesium sulfate heptahydrate","MgSO4(H2O)7","Neutral","Bath salts for sore muscles, a garden fertiliser and a mild laxative.","It is a salt of a strong acid and a strong base, so it is neutral. The (H₂O)₇ in the formula is water locked inside the crystal."],
+ ["Magnesium Chloride","mgcl2","Magnesium chloride","MgCl2","Neutral","De-icing roads, making tofu and magnesium metal.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Magnesium Carbonate","mgco3|magnesite","Magnesium carbonate","MgCO3","Basic","Gym chalk, antacids and furnace linings.","The carbonate ion takes H⁺ from water, leaving extra OH⁻, so it is mildly basic."],
+ ["Barium Sulfate","baso4|barium meal","Barium sulfate","BaSO4","Neutral","The 'barium meal' that makes the gut show up on X-rays; white paint.","It is a salt of a strong acid and a strong base and hardly dissolves, so it is neutral."],
+ ["Barium Chloride","bacl2","Barium chloride","BaCl2","Neutral","Testing for sulfates in the lab and making fireworks. Poisonous.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Lead(II) Nitrate","lead nitrate|pbno32","Lead(II) nitrate","Pb(NO3)2","Acidic","Making other lead chemicals and in the lab. Poisonous.","The lead ion reacts with water and releases H⁺, so its solution is slightly acidic."],
+ ["Potassium Iodide","ki","Potassium iodide","KI","Neutral","Iodised salt and protecting the thyroid.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Potassium Bromide","kbr","Potassium bromide","KBr","Neutral","Photography and veterinary medicine.","A salt of a strong acid and a strong base, so it is neutral."],
+ ["Sodium Fluoride","naf","Sodium fluoride","NaF","Basic","Toothpaste to prevent tooth decay and water fluoridation.","The fluoride ion takes a little H⁺ from water, so the solution is slightly basic."],
+ ["Zinc Chloride","zncl2","Zinc chloride","ZnCl2","Acidic","Soldering flux and wood preservative.","Zinc ions react with water and release H⁺, so the solution is acidic."],
+ ["Iron(II) Sulfate","ferrous sulfate|green vitriol|feso4|iron sulfate","Iron(II) sulfate","FeSO4","Acidic","Iron tablets for anaemia and water treatment.","Iron ions react with water and release H⁺, so the solution is slightly acidic."],
+ ["Copper(II) Oxide","copper oxide|cuo|black copper oxide","Copper(II) oxide","CuO","Basic","Colouring glass and ceramics and a school lab chemical.","A metal oxide that reacts with acids to make a salt and water, so it is basic."],
+ ["Calcium Phosphate","ca3po42|bone ash","Calcium phosphate","Ca3(PO4)2","Basic","Bones and teeth, fertilisers and food additive.","The phosphate ion takes H⁺ from water, so it is weakly basic."],
+ ["Nitrogen Dioxide","no2|brown gas","Nitrogen dioxide","NO2","Acidic","Making nitric acid; a brown air pollutant from vehicles.","It dissolves in water to make nitric acid, so it is an acidic oxide."],
+ ["Nitric Oxide","nitrogen monoxide|no","Nitrogen monoxide","NO","Neutral","Made in lightning and car engines; helps widen blood vessels.","It does not react with water to form an acid or base, so it is neutral."],
+ ["Carbon Monoxide","co|cok","Carbon monoxide","CO","Neutral","Making metals in furnaces and fuel gas. Very poisonous.","It is a neutral oxide: it does not react with water to form an acid or base."],
+ ["Ozone","o3","Trioxygen","O3","Neutral","The ozone layer blocks harmful ultraviolet rays; used to purify water.","It does not form H⁺ or OH⁻ in water, so it is neutral."],
+ ["Hydrofluoric Acid","hf|hydrogen fluoride","Hydrogen fluoride solution","HF","Acidic","Etching glass and making fluorine chemicals. Very dangerous.","A weak acid that releases some H⁺ in water, but it is very harmful to skin."],
+ ["Methanol","methyl alcohol|wood alcohol|ch3oh","Methanol","CH3OH","Neutral","Fuel, antifreeze and a solvent. Poisonous to drink.","It does not release H⁺ or OH⁻ ions, so it is neutral."],
+ ["Benzene","c6h6","Benzene","C6H6","Neutral","Making plastics, dyes and medicines. Harmful.","It does not mix with water or form ions, so it is neutral."],
+ ["Sodium Oxide","na2o","Sodium oxide","Na2O","Basic","Glass making and in the lab.","It reacts with water to make sodium hydroxide, a strong base."],
+ ["Silver Chloride","agcl","Silver chloride","AgCl","Neutral","Photography and silver-plated coatings.","It is an insoluble salt of a strong acid, so it is neutral."],
+ ["Copper(II) Chloride","copper chloride|cucl2","Copper(II) chloride","CuCl2","Acidic","Dyeing cloth and catalysts.","Copper ions react with water and release H⁺, so its solution is slightly acidic."],
+ ["Iron(III) Chloride","ferric chloride|fecl3","Iron(III) chloride","FeCl3","Acidic","Making printed circuit boards and treating water.","Iron(III) ions react strongly with water and release H⁺, so the solution is acidic."],
+ ["Sulfurous Acid","h2so3|sulphurous acid","Sulfurous acid","H2SO3","Acidic","Bleaching paper and preserving food.","Sulfur dioxide dissolved in water makes this weak acid, which releases H⁺."]
+];
+const PH = {Acidic:3, Neutral:7, Basic:11};
+// Physical state lists (anything not listed here is a solid)
+const GAS = new Set(["Carbon Dioxide","Sulfur Dioxide","Oxygen Gas","Hydrogen Gas","Nitrogen Gas","Chlorine Gas","Hydrogen Sulfide","Methane","Propane","Ammonia","Ozone","Nitrogen Dioxide","Nitric Oxide","Carbon Monoxide"]);
+const LIQ = new Set(["Water","Hydrochloric Acid","Sulfuric Acid","Nitric Acid","Acetic Acid","Carbonic Acid","Phosphoric Acid","Lactic Acid","Hydrobromic Acid","Formic Acid","Ethanol","Hydrogen Peroxide","Glycerol","Acetone","Methanol","Benzene","Sodium Hypochlorite","Hydrofluoric Acid","Sulfurous Acid"]);
+// Compounds that are salts (formed from an acid + a base)
+const SALT = new Set(["Sodium Chloride","Potassium Chloride","Calcium Chloride","Sodium Nitrate","Silver Nitrate","Sodium Sulfate","Potassium Nitrate","Calcium Sulfate","Potassium Permanganate","Ammonium Chloride","Copper Sulfate","Ammonium Nitrate","Aluminium Sulfate","Zinc Sulfate","Sodium Bicarbonate","Sodium Carbonate","Calcium Carbonate","Sodium Hypochlorite","Epsom Salt","Magnesium Chloride","Magnesium Carbonate","Barium Sulfate","Barium Chloride","Lead(II) Nitrate","Potassium Iodide","Potassium Bromide","Sodium Fluoride","Zinc Chloride","Iron(II) Sulfate","Calcium Phosphate","Silver Chloride","Copper(II) Chloride","Iron(III) Chloride"]);
+const TYPE_HOW = {
+ Acidic:"Reacts with metals to release hydrogen gas, neutralises bases to form a salt and water, turns blue litmus red and has a pH below 7.",
+ Basic:"Neutralises acids to form a salt and water, turns red litmus blue, feels slippery and has a pH above 7.",
+ Neutral:"Does not change the colour of litmus paper and has a pH close to 7.",
+ Salt:"Forms when an acid reacts with a base (neutralisation). Many salts dissolve in water and conduct electricity because they split into ions."
+};
+
+/* ===== C. BUILD ONE COMBINED LIST OF ELEMENTS + COMPOUNDS ===== */
+const RECORDS = [];
+for(const sym in ELEMENTS){
+  const [n,z,m,a,st,cat,uses] = ELEMENTS[sym];
+  RECORDS.push({name:n, aliases: sym==="Al"?["aluminum"]:[], chem:n+" (element)", formula:sym, type:"Element", water:"Neutral",
+    state:st, uses, why:elementWhy(cat), how:HOW[cat], kind:"element", cat});
+}
+DB.forEach(s => {
+  const [name,al,chem,formula,cls,uses,why] = s, type = SALT.has(name) ? "Salt" : cls;
+  RECORDS.push({name, aliases:al.split("|"), chem, formula, type, water:cls,
+    state: GAS.has(name)?"gas":LIQ.has(name)?"liquid":"solid", uses, why,
+    how: TYPE_HOW[type] + (type==="Salt" ? " In water, its solution is "+cls.toLowerCase()+"." : ""), kind:"compound"});
+});
+
+/* ===== D. HELPER TOOLS ===== */
+const $ = id => document.getElementById(id);
+const store = { // safe storage: never crashes if the browser blocks it
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+/* Counts atoms in a formula such as Ca(OH)2 or MgSO4(H2O)7 */
+function parseFormula(f){
+  const stack = [{}], re = /([A-Z][a-z]?)(\d*)|(\()|\)(\d*)/g; let m;
+  while((m = re.exec(f))){
+    if(m[1]){ const c = stack[stack.length-1]; c[m[1]] = (c[m[1]]||0) + (+m[2]||1); }
+    else if(m[3]){ stack.push({}); }
+    else { const t = stack.pop(), n = +m[4]||1, p = stack[stack.length-1]; for(const k in t) p[k] = (p[k]||0) + t[k]*n; }
+  }
+  return stack[0];
+}
+const pretty = f => f.replace(/(\d+)/g,"<sub>$1</sub>");
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,"");
+const keysOf = r => [r.name, ...r.aliases, r.chem, r.formula].map(norm);
+function lev(a,b){ // spelling distance between two words
+  const d=[]; for(let i=0;i<=a.length;i++) d[i]=[i];
+  for(let j=1;j<=b.length;j++) d[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[a.length][b.length];
+}
+
+/* ===== E. SEARCH LOGIC =====
+   1) one exact match -> show it   ("Iron" = the element, "Iron Oxide" = Fe2O3)
+   2) several exact matches -> ask the user to choose
+   3) partial matches: one -> show it, many -> ask the user to choose
+   4) an unknown formula -> work it out from the atoms
+   5) a spelling mistake -> closest match */
+function related(rec){ // other substances that share the first word, e.g. Iron -> Iron(III) Oxide
+  const w = norm(rec.name.split(/[ (]/)[0]);
+  return RECORDS.filter(r => r!==rec && norm(r.name).includes(w)).slice(0,6).map(r => r.name);
+}
+function formulaGuess(t){
+  t = t.replace(/\s/g,"");
+  if(!/^(([A-Z][a-z]?\d*)|\(|\)\d*)+$/.test(t) || (t.match(/\(/g)||[]).length !== (t.match(/\)/g)||[]).length) return null;
+  const keys = Object.keys(parseFormula(t));
+  if(!keys.length || !keys.every(k => ELEMENTS[k])) return null;
+  let cls="Neutral", why="It does not follow an obvious acid or base pattern, so it is estimated as neutral.";
+  if(/^H\d*[A-Z(]/.test(t) && !keys.includes("C")){ cls="Acidic"; why="Formulas that start with hydrogen are usually acids, because the hydrogen can leave as H⁺."; }
+  else if(/OH\)?\d*$/.test(t)){ cls="Basic"; why="Formulas ending in OH usually release OH⁻ ions, which makes them bases."; }
+  return {name:t, aliases:[], chem:"Not in the built-in list", formula:t, type:cls, water:cls, state:"Not known",
+    uses:"This substance is not in our list yet, so only details worked out from the formula are shown.",
+    why:why+" (This is an estimate based on the formula.)", how:TYPE_HOW[cls], kind:"compound", guess:true};
+}
+function search(text){
+  const raw = text.trim(), q = norm(raw.toLowerCase().replace(/sulph/g,"sulf"));
+  if(!q) return null;
+  let exact = RECORDS.filter(r => keysOf(r).includes(q));
+  if(exact.length > 1){                                   // "CO" (gas) vs "Co" (cobalt), or exact name wins
+    const cs = exact.filter(r => r.formula === raw), nm = exact.filter(r => norm(r.name) === q);
+    if(cs.length === 1) exact = cs; else if(nm.length === 1) exact = nm;
+  }
+  if(exact.length === 1) return {kind:"one", rec:exact[0], related:related(exact[0])};
+  if(exact.length > 1) return {kind:"many", title:'More than one substance matches "'+raw+'"', list:exact};
+  const part = RECORDS.map(r => [keysOf(r).some(k=>k.startsWith(q)) ? 2 : keysOf(r).some(k=>k.includes(q)) ? 1 : 0, r])
+                      .filter(x => x[0]).sort((a,b) => b[0]-a[0]).map(x => x[1]);
+  if(part.length === 1) return {kind:"one", rec:part[0], related:related(part[0])};
+  if(part.length > 1) return {kind:"many", title:part.length+' matches for "'+raw+'"', list:part};
+  const g = formulaGuess(raw);
+  if(g) return {kind:"one", rec:g, note:"This is not in our list, so we worked it out from the formula you typed.", related:[]};
+  const near = RECORDS.map(r => [Math.min(...keysOf(r).map(k => lev(q,k))), r]).sort((a,b) => a[0]-b[0]);
+  if(near[0][0] <= Math.max(2, Math.floor(q.length*0.25)))
+    return {kind:"one", rec:near[0][1], note:'We could not find "'+raw+'" exactly, so this is the closest match.', related:near.slice(1,4).map(x=>x[1].name)};
+  return {kind:"many", title:'We could not find "'+raw+'". Did you mean:', list:near.slice(0,6).map(x=>x[1])};
+}
+
+/* ===== E2. DETAILED PROFILES (21 sections) =====
+   SECTIONS = every field of the detailed profile. A field with no data shows "Currently unknown".
+   Value tags written after a "|": m = measured, t = theoretical, e = estimated, c = calculated, n = not applicable. */
+const SECTIONS = [
+ ["1. Basic Information","Common name|IUPAC name|Alternative names|Trade names|Historical names|Formula|Chemical formula variations|CAS Number|PubChem CID|InChI|InChIKey|SMILES|Molecular weight|Molar mass"],
+ ["2. Classification","Chemical family|Functional groups|Organic/Inorganic|Acid/Base/Salt/Oxide|Mineral class|Periodic table classification"],
+ ["3. Discovery & History","Discovery date|Discoverer(s)|Naming origin|Historical importance|Timeline of major discoveries"],
+ ["4. Atomic & Molecular Information","Atomic number|Electron configuration|Oxidation states|Valence electrons|Atomic radius|Ionic radius|Covalent radius|van der Waals radius|Electronegativity|Electron affinity|Ionization energies|Bond lengths|Bond angles|Molecular geometry|Hybridization|Polarity"],
+ ["5. Physical Properties","Appearance|Color|Odor|Taste|State at STP|Density|Melting point|Boiling point|Sublimation point|Triple point|Critical point|Crystal structure|Hardness|Brittleness|Elasticity|Thermal conductivity|Electrical conductivity|Magnetic properties|Optical properties|Refractive index|Solubility in different solvents|Viscosity|Surface tension"],
+ ["6. Chemical Properties","Reactivity|Stability|Corrosion behavior|Oxidation/reduction behavior|Acidity/basicity|pKa/pKb|Hydrolysis|Combustibility|Explosive properties|Common reactions|Decomposition reactions|Polymerization behavior"],
+ ["7. Thermodynamic Data","Enthalpy of formation|Gibbs free energy|Entropy|Heat capacity|Standard electrode potential|Equilibrium constants"],
+ ["8. Spectroscopic Information","IR spectrum|Raman spectrum|UV-Vis spectrum|NMR data|Mass spectrum|X-ray diffraction information"],
+ ["9. Crystal & Structural Information","Crystal system|Space group|Unit cell parameters|Lattice constants|Coordination number"],
+ ["10. Isotopes & Nuclear Properties","Naturally occurring isotopes|Synthetic isotopes|Half-lives|Decay modes|Radioactivity|Nuclear spin"],
+ ["11. Occurrence","Natural occurrence|Minerals containing it|Geological occurrence|Biological occurrence|Cosmic abundance|Earth's crust abundance|Ocean abundance|Atmospheric abundance"],
+ ["12. Production & Synthesis","Industrial production|Laboratory synthesis|Extraction methods|Refining|Purification|Manufacturing processes"],
+ ["13. Uses","Summary of common uses|Industrial uses|Laboratory uses|Medical uses|Pharmaceutical uses|Agricultural uses|Electronics|Aerospace|Construction|Food industry|Everyday products|Scientific research"],
+ ["14. Biological Information","Biological role|Human metabolism|Toxicity|Nutrition|Essentiality|Environmental impact|Ecological effects"],
+ ["15. Safety","Health hazards|Safety precautions|Storage|Transport classification|PPE requirements|Fire hazards|Reactivity hazards|First aid|Disposal methods"],
+ ["16. Regulations","OSHA|EPA|REACH|GHS classification|Hazard statements|Precautionary statements"],
+ ["17. Commercial Information","Availability|Manufacturers|Typical purity grades|Market price"],
+ ["18. Interesting Facts","Rare facts|Record-breaking properties|Famous experiments|Historical events|Trivia|Common misconceptions"],
+ ["19. Related Chemistry","Common compounds|Derivatives|Similar substances|Comparison with related chemicals|Reaction pathways"],
+ ["20. Advanced Scientific Information","Quantum mechanical properties|Computational chemistry data|Molecular orbitals|Relativistic effects|Current research|Open scientific questions|Recent discoveries|Nanotechnology applications|Emerging technologies"],
+ ["21. References","Cited sources"]
+].map(x => [x[0], x[1].split("|")]);
+const TAGS = {m:"measured", t:"theoretical", e:"estimated", c:"calculated", n:"not applicable"};
+// Fields that make no sense for a single atom (element) or for a whole compound
+const NA = {
+  element: new Set(["Functional groups","Bond angles","Molecular geometry","Hybridization","Polarity"]),
+  compound: new Set(["Atomic number","Electron configuration","Oxidation states","Valence electrons","Atomic radius","Ionic radius","Covalent radius","van der Waals radius","Electronegativity","Electron affinity","Ionization energies","Periodic table classification"])
+};
+const REFS = "CRC Handbook of Chemistry and Physics; NIST Chemistry WebBook; PubChem (NCBI); IUPAC Compendium of Chemical Terminology. Please check values against these before exams or lab work.";
+/* Hand-written profiles. Add more by copying a block. Keys must match the field names above exactly. */
+const PROFILES = {
+"Water":{"IUPAC name":"Oxidane","Alternative names":"Hydrogen oxide; dihydrogen monoxide; hydrogen hydroxide","CAS Number":"7732-18-5","PubChem CID":"962","InChI":"InChI=1S/H2O/h1H2","InChIKey":"XLYOFNOQVPJJNP-UHFFFAOYSA-N","SMILES":"O",
+ "Chemical family":"Hydrogen oxide; amphoteric solvent","Organic/Inorganic":"Inorganic","Discovery date":"1781–1783","Discoverer(s)":"Henry Cavendish showed in 1781 that burning hydrogen produces water; Antoine Lavoisier explained it as a compound of hydrogen and oxygen (1783)","Naming origin":"English 'water' comes from Old English wæter",
+ "Bond lengths":"O–H ≈ 95.84 pm (gas phase)|m","Bond angles":"H–O–H ≈ 104.5°|m","Molecular geometry":"Bent (V-shaped): two bonding pairs and two lone pairs on oxygen","Hybridization":"Approximately sp³ on oxygen (simple model)|t","Polarity":"Polar; dipole moment 1.85 D (gas)|m",
+ "Appearance":"Clear liquid","Color":"Colourless (faint blue in very thick layers)","Odor":"Odourless","Taste":"Tasteless when pure","Density":"0.9970 g/cm³ at 25 °C; maximum ≈ 0.99997 g/cm³ at 3.98 °C|m","Melting point":"0.00 °C (273.15 K) at 1 atm|m","Boiling point":"≈ 100 °C (99.97 °C) at 1 atm|m","Triple point":"0.01 °C at 611.657 Pa|m","Critical point":"373.946 °C and 22.064 MPa|m","Crystal structure":"Ordinary ice (ice Ih) is hexagonal|m","Thermal conductivity":"0.606 W/(m·K) at 25 °C|m","Electrical conductivity":"≈ 5.5 µS/m for ultrapure water at 25 °C; ordinary water conducts because of dissolved ions|m","Magnetic properties":"Diamagnetic","Refractive index":"1.333 at 20 °C (589 nm)|m","Solubility in different solvents":"Miscible with ethanol, methanol and acetone; almost insoluble in hexane","Viscosity":"0.890 mPa·s at 25 °C|m","Surface tension":"71.97 mN/m at 25 °C|m",
+ "Stability":"Very stable; splits only by electrolysis or extreme heat","pKa/pKb":"Autoionisation: pKw = 14.00 at 25 °C|m","Combustibility":"Not combustible","Common reactions":"Alkali metals react to give hydrogen and a hydroxide; many oxides form acids or bases; hydrolyses many salts","Decomposition reactions":"2H₂O → 2H₂ + O₂ (electrolysis)",
+ "Enthalpy of formation":"−285.8 kJ/mol (liquid, 298 K)|m","Gibbs free energy":"−237.1 kJ/mol (liquid, 298 K)|m","Entropy":"69.95 J/(mol·K) (liquid, 298 K)|m","Heat capacity":"75.3 J/(mol·K) (liquid, 298 K)|m","Equilibrium constants":"Kw = 1.0 × 10⁻¹⁴ at 25 °C|m",
+ "Natural occurrence":"About 97 % of Earth's surface water is in the oceans; the rest is ice, groundwater, lakes, rivers and vapour","Biological occurrence":"About 60 % of an adult human's body mass",
+ "Industrial uses":"Solvent, coolant, steam power, cleaning and chemical feedstock","Agricultural uses":"Irrigation","Biological role":"Solvent of life; takes part in hydrolysis and photosynthesis","Essentiality":"Essential","Toxicity":"Non-toxic, but drinking far too much too fast can cause dangerous low sodium (hyponatraemia)",
+ "Health hazards":"Pure water is not hazardous; hot water and steam cause scalds","Fire hazards":"None","GHS classification":"Not classified as hazardous",
+ "Rare facts":"Ice is less dense than liquid water, so ice floats","Record-breaking properties":"Unusually high specific heat capacity and surface tension for a common liquid","Common misconceptions":"Pure water is a poor conductor; it is dissolved salts that make everyday water conduct electricity","Common compounds":"Hydrogen peroxide (H₂O₂), hydrates such as CuSO₄·5H₂O","Cited sources":REFS},
+"Iron":{"IUPAC name":"Iron","Alternative names":"Ferrum (Latin); iron metal","CAS Number":"7439-89-6","PubChem CID":"23925","InChI":"InChI=1S/Fe","InChIKey":"XEEYBQQBJWHFJM-UHFFFAOYSA-N","SMILES":"[Fe]",
+ "Chemical family":"Transition metal (group 8, period 4, d-block)","Organic/Inorganic":"Inorganic","Discovery date":"Prehistoric; iron smelting became widespread around 1200 BCE (start of the Iron Age)","Naming origin":"Symbol Fe from Latin ferrum; the word 'iron' comes from Old English īren","Historical importance":"Gave its name to the Iron Age; steel powered the Industrial Revolution",
+ "Electron configuration":"[Ar] 3d⁶ 4s²|m","Oxidation states":"+2 and +3 are the most common; −2 to +6 are known|m","Valence electrons":"8 (3d and 4s electrons)","Atomic radius":"126 pm (empirical)|m","Covalent radius":"132 ± 3 pm (low spin); 152 ± 6 pm (high spin)|m","Electronegativity":"1.83 (Pauling scale)|m","Electron affinity":"14.6 kJ/mol|m","Ionization energies":"1st 762.5 kJ/mol; 2nd 1561.9 kJ/mol; 3rd 2957 kJ/mol|m",
+ "Appearance":"Lustrous, ductile, malleable metal","Color":"Silvery-grey","Odor":"Odourless","Density":"7.874 g/cm³ at 20 °C|m","Melting point":"1538 °C (1811 K)|m","Boiling point":"2862 °C (3134 K)|m","Crystal structure":"Body-centred cubic (α-iron) at room temperature; face-centred cubic (γ-iron) from 912 to 1394 °C|m","Hardness":"Mohs 4|m","Thermal conductivity":"80.4 W/(m·K) at 300 K|m","Electrical conductivity":"Resistivity 96.1 nΩ·m at 20 °C|m","Magnetic properties":"Ferromagnetic below its Curie temperature of 770 °C|m","Solubility in different solvents":"Insoluble in water; dissolves in dilute acids",
+ "Corrosion behavior":"Rusts in moist air (hydrated iron(III) oxide); protected by galvanising, paint or alloying as stainless steel","Oxidation/reduction behavior":"Acts as a reducing agent: Fe → Fe²⁺ + 2e⁻","Combustibility":"Bulk iron is hard to ignite; iron powder and steel wool burn","Common reactions":"Fe + 2HCl → FeCl₂ + H₂; Fe + S → FeS (on heating); rusting: 4Fe + 3O₂ + xH₂O → 2Fe₂O₃·xH₂O",
+ "Enthalpy of formation":"0 kJ/mol (element in standard state)|m","Entropy":"27.3 J/(mol·K)|m","Heat capacity":"25.1 J/(mol·K) at 25 °C|m","Standard electrode potential":"Fe²⁺/Fe = −0.44 V; Fe³⁺/Fe²⁺ = +0.77 V (vs SHE)|m",
+ "Crystal system":"Cubic (body-centred, α-iron)","Space group":"Im3̄m (No. 229)","Lattice constants":"a = 286.65 pm (α-iron, 20 °C)|m","Coordination number":"8 (body-centred cubic)",
+ "Naturally occurring isotopes":"⁵⁴Fe 5.85 %; ⁵⁶Fe 91.75 %; ⁵⁷Fe 2.12 %; ⁵⁸Fe 0.28 %|m","Nuclear spin":"⁵⁷Fe: I = ½ (used in Mössbauer spectroscopy); ⁵⁶Fe: 0","Radioactivity":"Natural iron is stable; traces of radioactive ⁶⁰Fe (half-life ≈ 2.6 million years) exist|m",
+ "Earth's crust abundance":"About 5–6 % by mass (4th most abundant element)|m","Minerals containing it":"Haematite Fe₂O₃, magnetite Fe₃O₄, siderite FeCO₃, pyrite FeS₂","Geological occurrence":"Earth's core is mainly iron with some nickel","Biological occurrence":"Haemoglobin, myoglobin and many enzymes",
+ "Industrial production":"Blast furnace: ore is reduced by carbon monoxide from coke, e.g. Fe₂O₃ + 3CO → 2Fe + 3CO₂","Refining":"Pig iron is turned into steel by lowering its carbon content (basic oxygen furnace)",
+ "Industrial uses":"Steel and cast iron for machines, vehicles, tools and pipes","Medical uses":"Iron salts treat anaemia","Construction":"Reinforcing bars and structural steel",
+ "Biological role":"Carries oxygen in haemoglobin; part of electron-transfer proteins and enzymes","Essentiality":"Essential","Nutrition":"Red meat, lentils, spinach and fortified cereals","Toxicity":"Iron overdose, especially in children, can be serious","Fire hazards":"Fine iron powder can ignite and burn",
+ "Rare facts":"Iron-56 is among the most tightly bound nuclei; fusing iron does not release energy, which helps trigger the collapse of massive stars","Common misconceptions":"Most 'iron' objects are actually steel (iron with a little carbon)","Common compounds":"Iron(III) oxide Fe₂O₃; iron(II) sulfate FeSO₄; iron(III) chloride FeCl₃","Similar substances":"Cobalt and nickel (neighbouring ferromagnetic metals)","Cited sources":REFS},
+"Sodium Chloride":{"IUPAC name":"Sodium chloride","Alternative names":"Table salt; common salt; halite (mineral); rock salt","CAS Number":"7647-14-5","PubChem CID":"5234","InChI":"InChI=1S/ClH.Na/h1H;/q;+1/p-1","InChIKey":"FAPWRFPIFSIZLT-UHFFFAOYSA-M","SMILES":"[Na+].[Cl-]",
+ "Chemical family":"Ionic halide salt","Organic/Inorganic":"Inorganic","Mineral class":"Halide (mineral halite)","Historical importance":"Salt was used to preserve food and was a major trade good; the word 'salary' is linked to salt",
+ "Bond lengths":"Na–Cl ≈ 236 pm (gas-phase ion pair); 282 pm in the crystal|m","Polarity":"Ionic compound (very large electronegativity difference)",
+ "Appearance":"White crystalline solid","Color":"Colourless to white","Odor":"Odourless","Taste":"Salty","Density":"2.165 g/cm³|m","Melting point":"801 °C|m","Boiling point":"1413 °C|m","Crystal structure":"Face-centred cubic (rock-salt structure)|m","Hardness":"Mohs 2.5|m","Magnetic properties":"Diamagnetic","Refractive index":"1.544|m","Solubility in different solvents":"About 359 g/L in water at 25 °C; slightly soluble in ethanol; insoluble in most non-polar solvents|m",
+ "Stability":"Stable; slightly hygroscopic","Acidity/basicity":"A salt of a strong acid and a strong base; its solution is neutral (pH ≈ 7)","Common reactions":"NaCl + AgNO₃ → AgCl↓ + NaNO₃; electrolysis of brine gives NaOH, Cl₂ and H₂","Combustibility":"Not combustible",
+ "Enthalpy of formation":"−411.2 kJ/mol (solid)|m","Gibbs free energy":"−384.1 kJ/mol (solid)|m","Entropy":"72.1 J/(mol·K)|m","Heat capacity":"50.5 J/(mol·K)|m",
+ "Crystal system":"Cubic","Space group":"Fm3̄m (No. 225)","Lattice constants":"a = 564.02 pm|m","Coordination number":"6 for Na⁺ and 6 for Cl⁻",
+ "Natural occurrence":"Seawater (about 3.5 % salinity, mostly NaCl) and underground salt deposits","Minerals containing it":"Halite","Ocean abundance":"Sodium ≈ 10.8 g/kg and chloride ≈ 19.4 g/kg of seawater|m",
+ "Industrial production":"Mining halite, evaporating seawater or brine, and solution mining","Industrial uses":"Raw material of the chlor-alkali industry (NaOH, Cl₂); de-icing roads; water softening","Food industry":"Seasoning and preservation","Medical uses":"Saline drips and oral rehydration solutions",
+ "Biological role":"Na⁺ and Cl⁻ control water balance and nerve and muscle signals","Essentiality":"Essential","Toxicity":"Very large amounts are harmful; long-term high intake is linked to high blood pressure","Health hazards":"Not classified as hazardous in normal use","GHS classification":"Not classified as hazardous","Fire hazards":"None",
+ "Rare facts":"A cooked-meal-sized pinch of salt contains about as many ions as there are stars in many galaxies","Common misconceptions":"Sea salt and table salt are chemically both mostly NaCl","Common compounds":"Related salts: KCl, CaCl₂, NaBr","Cited sources":REFS},
+"Sulfuric Acid":{"IUPAC name":"Sulfuric acid","Alternative names":"Oil of vitriol; hydrogen sulfate","Historical names":"Oil of vitriol; vitriolic acid","CAS Number":"7664-93-9","PubChem CID":"1118","InChI":"InChI=1S/H2O4S/c1-5(2,3)4/h(H2,1,2,3,4)","InChIKey":"QAOWNCQODCNURD-UHFFFAOYSA-N","SMILES":"OS(=O)(=O)O",
+ "Chemical family":"Mineral (inorganic) oxoacid","Organic/Inorganic":"Inorganic","Discovery date":"Known to alchemists from the Middle Ages","Historical importance":"The lead-chamber process (1746) and later the contact process made it cheap; it became the most widely made industrial chemical",
+ "Molecular geometry":"Tetrahedral around sulfur","Polarity":"Polar",
+ "Appearance":"Dense, oily liquid","Color":"Colourless","Odor":"Odourless","Density":"1.83 g/cm³ (about 98 % acid)|m","Melting point":"10 °C (pure acid)|m","Boiling point":"≈ 337 °C (98 % acid, decomposes)|m","Viscosity":"≈ 27 mPa·s at 20 °C|m","Solubility in different solvents":"Miscible with water (very exothermic); reacts with ethanol",
+ "Acidity/basicity":"A strong acid: pKa1 is strongly negative (≈ −3); pKa2 ≈ 1.99|m","pKa/pKb":"pKa1 ≈ −3; pKa2 ≈ 1.99|m","Oxidation/reduction behavior":"Hot concentrated acid is a strong oxidising and dehydrating agent","Common reactions":"Zn + H₂SO₄ → ZnSO₄ + H₂; 2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O; dehydrates sugar to carbon","Corrosion behavior":"Corrodes most metals; concentrated acid is stored in steel but dilute acid attacks it","Combustibility":"Not combustible, but reacts violently with many materials",
+ "Enthalpy of formation":"−814 kJ/mol (liquid)|m",
+ "Industrial production":"Contact process: S → SO₂ → SO₃ (V₂O₅ catalyst) → oleum → H₂SO₄","Industrial uses":"Phosphate fertilisers (largest use), car batteries, metal cleaning, chemicals, dyes","Agricultural uses":"Making fertilisers such as superphosphate","Laboratory uses":"Strong acid and drying agent",
+ "Toxicity":"Corrosive to all tissue","Health hazards":"Severe burns to skin and eyes; mist damages lungs","Safety precautions":"Always add acid to water slowly, never water to acid","PPE requirements":"Goggles or face shield, acid-resistant gloves and apron","First aid":"Rinse skin or eyes with water for at least 15 minutes and seek urgent medical help","Transport classification":"UN 1830, Class 8 (corrosive)","GHS classification":"Skin Corr. 1A; GHS05 corrosive; signal word Danger","Hazard statements":"H314 causes severe skin burns and eye damage","Environmental impact":"Sulfur oxides in the air form acid rain",
+ "Common misconceptions":"Concentrated sulfuric acid does not 'melt' things; it dehydrates and chemically burns them","Common compounds":"Sulfates such as CuSO₄ and Na₂SO₄","Cited sources":REFS},
+"Carbon Dioxide":{"IUPAC name":"Carbon dioxide","Alternative names":"Carbonic anhydride; dry ice (solid form)","CAS Number":"124-38-9","PubChem CID":"280","InChI":"InChI=1S/CO2/c2-1-3","InChIKey":"CURLTUGMZLYLDI-UHFFFAOYSA-N","SMILES":"O=C=O",
+ "Chemical family":"Acidic oxide of carbon","Organic/Inorganic":"Inorganic (carbon oxide)","Discovery date":"About 1640 (as 'gas sylvestre'); studied in the 1750s","Discoverer(s)":"Jan Baptist van Helmont; Joseph Black described 'fixed air' in 1754","Historical importance":"A key gas in the study of respiration, photosynthesis and climate",
+ "Bond lengths":"C=O ≈ 116 pm|m","Bond angles":"O=C=O = 180°|m","Molecular geometry":"Linear","Hybridization":"sp on carbon|t","Polarity":"Non-polar molecule overall (the two polar C=O bonds cancel)",
+ "Appearance":"Gas (solid form: dry ice)","Color":"Colourless","Odor":"Odourless at normal levels","Taste":"Slightly sour (fizzy drinks)","Density":"≈ 1.98 kg/m³ gas at 0 °C and 1 atm|m","Sublimation point":"−78.5 °C at 1 atm|m","Triple point":"−56.6 °C at 518 kPa|m","Critical point":"31.0 °C at 7.38 MPa|m","Solubility in different solvents":"About 1.45 g/L in water at 25 °C and 1 atm; more soluble in ethanol and acetone|m",
+ "Acidity/basicity":"An acidic oxide: dissolves in water to form carbonic acid, so the solution is weakly acidic","pKa/pKb":"Carbonic acid: pKa1 ≈ 6.35; pKa2 ≈ 10.33 at 25 °C|m","Combustibility":"Not combustible; used to put fires out","Common reactions":"CO₂ + H₂O ⇌ H₂CO₃; CO₂ + Ca(OH)₂ → CaCO₃↓ + H₂O (limewater turns milky); photosynthesis 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂",
+ "Enthalpy of formation":"−393.5 kJ/mol (gas)|m","Gibbs free energy":"−394.4 kJ/mol (gas)|m","Entropy":"213.8 J/(mol·K) (gas)|m","Heat capacity":"37.1 J/(mol·K) (gas)|m",
+ "Natural occurrence":"Volcanoes, respiration, decay and combustion","Atmospheric abundance":"About 0.042 % (roughly 420 ppm) in the 2020s and rising|m",
+ "Industrial production":"By-product of hydrogen production from natural gas, fermentation and burning fuels","Industrial uses":"Fire extinguishers, refrigeration (dry ice), supercritical solvent","Food industry":"Carbonated drinks; decaffeinating coffee","Agricultural uses":"Raising CO₂ in greenhouses",
+ "Biological role":"Produced in respiration and used by plants in photosynthesis","Toxicity":"Not poisonous at low levels but displaces oxygen; high levels cause headaches, dizziness and suffocation","Environmental impact":"A major greenhouse gas driving climate change; dissolves in oceans causing ocean acidification","OSHA":"Permissible exposure limit 5000 ppm (8-hour average)|m","GHS classification":"Compressed gas (H280) for cylinders",
+ "Rare facts":"Dry ice does not melt; it sublimates directly from solid to gas","Common compounds":"Carbonates, carbonic acid and bicarbonates","Cited sources":REFS},
+"Sodium Hydroxide":{"IUPAC name":"Sodium hydroxide","Alternative names":"Caustic soda; lye","CAS Number":"1310-73-2","PubChem CID":"14798","InChI":"InChI=1S/Na.H2O/h;1H2/q+1;/p-1","InChIKey":"HEMHJVSKTPXQMS-UHFFFAOYSA-M","SMILES":"[OH-].[Na+]",
+ "Chemical family":"Strong base (alkali metal hydroxide)","Organic/Inorganic":"Inorganic","Historical importance":"Used for soap-making for centuries; Humphry Davy isolated sodium by electrolysing molten NaOH in 1807",
+ "Appearance":"White, waxy solid (pellets, flakes)","Color":"White","Odor":"Odourless","Density":"2.13 g/cm³|m","Melting point":"323 °C|m","Boiling point":"1388 °C|m","Solubility in different solvents":"About 1110 g/L in water at 20 °C (very exothermic); soluble in ethanol and methanol|m",
+ "Acidity/basicity":"A strong base; a 0.1 mol/L solution has a pH of about 13","Common reactions":"NaOH + HCl → NaCl + H₂O; 2NaOH + CO₂ → Na₂CO₃ + H₂O; fats + NaOH → soap + glycerol","Corrosion behavior":"Attacks aluminium and zinc, releasing hydrogen; stored in steel or plastic","Stability":"Hygroscopic; absorbs CO₂ and moisture from air",
+ "Enthalpy of formation":"−425.8 kJ/mol (solid)|m","Entropy":"64.4 J/(mol·K) (solid)|m",
+ "Industrial production":"Chlor-alkali process: electrolysis of brine gives NaOH, Cl₂ and H₂","Industrial uses":"Soap, paper, textiles, aluminium extraction (Bayer process), biodiesel, drain cleaners","Food industry":"Curing olives, making pretzels (in tiny controlled amounts)",
+ "Toxicity":"Corrosive","Health hazards":"Severe burns to skin and eyes; swallowing causes serious internal damage","PPE requirements":"Goggles, chemical-resistant gloves and apron","First aid":"Rinse with plenty of water for at least 15 minutes and get urgent medical help","Safety precautions":"Add solid slowly to water with stirring; the mixing gets very hot","Transport classification":"UN 1823 (solid) / UN 1824 (solution), Class 8","GHS classification":"Skin Corr. 1A; Met. Corr. 1; GHS05 corrosive; signal word Danger","Hazard statements":"H290 may be corrosive to metals; H314 causes severe skin burns and eye damage",
+ "Common misconceptions":"A bottle of 'drain cleaner' is not harmless just because it is a household product","Common compounds":"Related bases: KOH, Ca(OH)₂; salts such as NaCl and Na₂CO₃","Cited sources":REFS}
+};
+/* Fields filled in automatically for EVERY substance from the main data above */
+function autoFill(r){
+  const c = parseFormula(r.formula); let mm = 0; for(const k in c) mm += ELEMENTS[k][2]*c[k];
+  const mol = mm.toFixed(3)+" g/mol|c";
+  const o = {"Common name":r.name, "Formula":r.formula, "Molecular weight":mol, "Molar mass":mol,
+    "Acid/Base/Salt/Oxide": r.type + (r.type==="Salt" ? " (solution is "+r.water.toLowerCase()+")" : ""),
+    "State at STP": r.state+" at room temperature", "Summary of common uses":r.uses, "Reactivity":r.how, "Acidity/basicity":r.why};
+  const al = r.aliases.filter(a => a && norm(a)!==norm(r.formula)); if(al.length) o["Alternative names"] = al.join("; ");
+  if(r.chem && !r.guess) o["IUPAC name"] = undefined;
+  if(r.kind==="element"){ o["Atomic number"] = String(ELEMENTS[r.formula][1]); o["Periodic table classification"] = r.cat; o["Chemical family"] = r.cat; }
+  return o;
+}
+function renderProfile(r){
+  const data = Object.assign(autoFill(r), PROFILES[r.name] || {}), na = NA[r.kind];
+  let known = 0, total = 0, html = "";
+  SECTIONS.forEach(([title, fields], i) => {
+    let rows = "", k = 0;
+    fields.forEach(f => {
+      total++; let v = data[f];
+      if(v === undefined && na.has(f)) v = "Not applicable|n";
+      if(v === undefined){ rows += `<div class="row"><span class="k">${f}</span><span class="v unk">Currently unknown</span></div>`; return; }
+      let tag = "", txt = v; const m = /^([\s\S]*)\|([mtecn])$/.exec(v); if(m){ txt = m[1]; tag = m[2]; }
+      if(tag !== "n"){ known++; k++; }
+      rows += `<div class="row"><span class="k">${f}</span><span class="v">${txt}${tag ? ` <i class="tag t${tag}">${TAGS[tag]}</i>` : ""}</span></div>`;
+    });
+    html += `<details class="sec"${i===0?" open":""}><summary>${title} <small>${k}/${fields.length}</small></summary>${rows}</details>`;
+  });
+  const full = PROFILES[r.name] ? "" : " This substance has only the automatic basics so far; most fields are not yet filled in.";
+  return `<p class="label" style="margin-top:1rem"><b>${known} of ${total} fields known.</b>${full} Tags show where a value comes from:
+    <i class="tag tm">measured</i> <i class="tag tt">theoretical</i> <i class="tag te">estimated</i> <i class="tag tc">calculated</i></p>
+    <div class="chips"><button type="button" class="chip" onclick="document.querySelectorAll('#profile details').forEach(d=>d.open=true)">Expand all</button>
+    <button type="button" class="chip" onclick="document.querySelectorAll('#profile details').forEach(d=>d.open=false)">Collapse all</button></div>${html}`;
+}
+
+/* ===== F. SHOWING RESULTS ===== */
+function showRecord(r){
+  const counts = parseFormula(r.formula);
+  const atoms = Object.keys(counts).map(sym => {
+    const [en,z,m,a] = ELEMENTS[sym];
+    return `<div class="card atom pop">
+      <div class="tile"><em>${z}</em><strong>${sym}</strong><span>${m}</span></div>
+      <div><h3>${en} (${sym})</h3><ul>
+        <li>Atomic number: <b>${z}</b></li><li>Atomic mass: <b>${m}</b></li>
+        <li>Protons: <b>${z}</b></li><li>Electrons: <b>${z}</b></li>
+        <li>Neutrons: <b>${a-z}</b> <small>(mass number ${a})</small></li>
+        <li>Atoms in formula: <b>${counts[sym]}</b></li></ul></div></div>`;
+  }).join("");
+  const fav = loadList("elementiq_fav").includes(r.name);
+  const bar = r.kind==="compound" ? `<div class="ph"><b id="mark" style="left:50%"></b></div>
+      <div class="phl"><span>0 Acidic</span><span>7 Neutral</span><span>14 Basic</span></div>` : "";
+  const typeText = r.type==="Salt" ? `Salt <small>(in water: ${r.water})</small>` : r.type;
+  $("result").innerHTML = `
+    <div class="card pop">
+      <div class="top"><h2>${r.name}</h2><span class="badge ${r.type.toLowerCase()}">${r.type}</span></div>
+      <div class="formula">${pretty(r.formula)}</div>
+      ${r.guess ? "" : `<button class="icon-btn" id="favBtn" type="button">${fav?"♥ Saved":"♡ Save to favourites"}</button>`}
+      <div class="grid">
+        <div class="info"><small>Common name</small>${r.name}</div>
+        <div class="info"><small>Chemical name</small>${r.chem}</div>
+        <div class="info"><small>Chemical formula</small>${pretty(r.formula)}</div>
+        <div class="info"><small>Type</small>${typeText}</div>
+        <div class="info"><small>Physical state (room temperature)</small>${r.state}</div>
+        <div class="info"><small>Common uses</small>${r.uses}</div>
+      </div>
+      <h3 class="sub">Chemistry explanation</h3>
+      <div class="info"><small>Why is it ${r.type.toLowerCase()}? (Class 7–10)</small>${r.why}</div>
+      <div class="info" style="margin-top:.8rem"><small>How it behaves chemically</small>${r.how}</div>
+      ${bar}
+    </div>
+    <h2 class="title" style="margin-top:1.5rem">Atomic information</h2>
+    <div class="atoms">${atoms}</div>
+    <p class="label">Protons = electrons = atomic number (neutral atom). Neutrons = mass number of the most common isotope − atomic number.</p>
+    <div class="card" style="margin-top:1rem"><button class="btn" id="profBtn" type="button" style="width:100%">📖 Open full detailed profile (21 sections)</button><div id="profile" hidden></div></div>`;
+  if(!r.guess) $("favBtn").addEventListener("click", () => toggleFav(r));
+  $("profBtn").addEventListener("click", () => { // open or close the 21-section profile
+    const p = $("profile");
+    if(p.hidden){ if(!p.innerHTML) p.innerHTML = renderProfile(r); p.hidden = false; $("profBtn").textContent = "Hide detailed profile"; }
+    else { p.hidden = true; $("profBtn").textContent = "📖 Open full detailed profile (21 sections)"; }
+  });
+  setTimeout(() => { const m = $("mark"); if(m) m.style.left = (PH[r.water]/14*100)+"%"; }, 60);
+}
+function showChoices(title, list){ // "which one do you mean?" screen
+  $("result").innerHTML = '<div class="card pop"><h2 id="ct"></h2><p class="label">Tap the one you mean:</p><div class="opts" id="opts"></div></div>';
+  $("ct").textContent = title;
+  list.slice(0,12).forEach(r => {
+    const b = document.createElement("button"); b.type="button"; b.className="opt";
+    b.innerHTML = `<b></b><span>${pretty(r.formula)} · ${r.type}</span>`; b.firstChild.textContent = r.name;
+    b.addEventListener("click", () => show(r)); $("opts").appendChild(b);
+  });
+}
+function show(r, note, rel){
+  showRecord(r);
+  if(note || (rel && rel.length)){
+    const box = document.createElement("div"); box.className="card pop"; box.style.marginBottom="1rem";
+    if(note){ const p=document.createElement("p"); p.textContent=note; box.appendChild(p); }
+    if(rel && rel.length){ const p=document.createElement("p"); p.className="label"; p.style.marginTop="0"; p.textContent="Related substances:"; box.appendChild(p);
+      const c=document.createElement("div"); c.className="chips"; makeChips(c,rel); box.appendChild(c); }
+    $("result").prepend(box);
+  }
+  if(!r.guess) saveRecent(r.name);
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function run(text){
+  if(!text.trim()){ $("q").focus(); return; }
+  const s = search(text);
+  if(s.kind==="one") show(s.rec, s.note, s.related);
+  else { showChoices(s.title, s.list); $("result").scrollIntoView({behavior:"smooth", block:"start"}); }
+}
+
+/* ===== G. RECENT SEARCHES AND FAVOURITES (saved in the browser) ===== */
+function loadList(key){ try{ return JSON.parse(store.get(key)) || []; }catch(e){ return []; } }
+function saveRecent(name){ store.set("elementiq_recent", JSON.stringify([name, ...loadList("elementiq_recent").filter(n=>n!==name)].slice(0,6))); drawLists(); }
+function toggleFav(r){
+  let f = loadList("elementiq_fav");
+  f = f.includes(r.name) ? f.filter(n=>n!==r.name) : [r.name, ...f];
+  store.set("elementiq_fav", JSON.stringify(f));
+  $("favBtn").textContent = f.includes(r.name) ? "♥ Saved" : "♡ Save to favourites"; drawLists();
+}
+function drawLists(){
+  const rec = loadList("elementiq_recent"), fav = loadList("elementiq_fav");
+  $("recentLabel").hidden = !rec.length; makeChips($("recent"), rec);
+  $("favLabel").hidden = !fav.length; makeChips($("favs"), fav);
+}
+function makeChips(box, names){ // tappable buttons
+  box.innerHTML = "";
+  names.forEach(n => { const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=n;
+    b.addEventListener("click", () => { $("q").value = n; run(n); }); box.appendChild(b); });
+}
+
+/* ===== H. DARK MODE ===== */
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("themeBtn").textContent = t==="dark" ? "☀️ Light" : "🌙 Dark";
+  store.set("elementiq_theme", t);
+}
+$("themeBtn").addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark"));
+
+/* ===== I. START-UP ===== */
+setTheme(store.get("elementiq_theme") || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("form").addEventListener("submit", e => { e.preventDefault(); run($("q").value); $("q").blur(); });
+$("q").addEventListener("input", () => { // suggestions while typing
+  const q = norm($("q").value.replace(/sulph/gi,"sulf")); if(q.length < 2) { makeChips($("live"), []); return; }
+  makeChips($("live"), RECORDS.filter(r => keysOf(r).some(k => k.includes(q))).slice(0,6).map(r => r.name));
+});
+makeChips($("examples"), ["Iron","Iron Oxide","Water","Epsom Salt","Sulfuric Acid","Calcium Carbonate","Carbon Dioxide"]);
+drawLists();
+</script>
+</body>
+</html>
